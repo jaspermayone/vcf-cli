@@ -7,7 +7,7 @@ Built for managing large contact exports from Apple Contacts before importing el
 ![Ruby](https://img.shields.io/badge/Ruby-3.0+-red)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-![VCF CLI Screenshot](assets/screenshot.png)
+![VCF CLI Screenshot](assets/demo.png)
 
 ## Features
 
