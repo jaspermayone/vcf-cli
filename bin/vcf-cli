@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/vcf_cli"
+
+if ARGV.empty?
+  puts "Usage: vcf-cli <path-to-vcf-file>"
+  puts "       vcf-cli contacts.vcf"
+  exit 1
+end
+
+file_path = ARGV[0]
+
+unless File.exist?(file_path)
+  puts "Error: File not found: #{file_path}"
+  exit 1
+end
+
+VcfCli::Application.new(file_path).run

@@ -1,0 +1,114 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:John Smith
+N:Smith;John;;;
+EMAIL;TYPE=HOME:john@example.com
+EMAIL;TYPE=WORK:john.smith@company.com
+TEL;TYPE=CELL:+1 555-123-4567
+TEL;TYPE=WORK:+1 555-987-6543
+ADR;TYPE=HOME:;;123 Main Street;San Francisco;CA;94102;USA
+ORG:Acme Corporation
+TITLE:Software Engineer
+NOTE:Met at tech conference 2023
+BDAY:1985-03-15
+URL;TYPE=HOME:https://johnsmith.dev
+PHOTO:data:image/jpeg;base64,placeholder
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+N:Doe;Jane;;;
+EMAIL;TYPE=HOME:jane.doe@email.com
+TEL;TYPE=CELL:+1 555-234-5678
+ADR;TYPE=HOME:;;456 Oak Avenue;New York;NY;10001;USA
+ORG:Tech Startup Inc
+TITLE:Product Manager
+NOTE:College friend
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Bob Wilson
+N:Wilson;Bob;;;
+EMAIL;TYPE=WORK:bob.wilson@bigcorp.com
+TEL;TYPE=WORK:+1 555-345-6789
+ORG:BigCorp Industries
+TITLE:Sales Director
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Alice Johnson
+N:Johnson;Alice;Marie;;Dr.
+EMAIL;TYPE=HOME:alice@gmail.com
+EMAIL;TYPE=WORK:dr.johnson@hospital.org
+TEL;TYPE=CELL:+1 555-456-7890
+TEL;TYPE=HOME:+1 555-111-2222
+ADR;TYPE=WORK:;;789 Medical Center Drive;Boston;MA;02115;USA
+ORG:City General Hospital
+TITLE:Chief of Medicine
+NOTE:Family doctor\nVery helpful with referrals
+BDAY:1970-07-22
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Charlie Brown
+N:Brown;Charlie;;;
+EMAIL;TYPE=HOME:charlie.b@email.com
+TEL;TYPE=CELL:+1 555-567-8901
+NOTE:Neighbor
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Diana Prince
+N:Prince;Diana;;;
+EMAIL;TYPE=WORK:diana@wondertech.io
+TEL;TYPE=WORK:+1 555-678-9012
+ORG:WonderTech
+TITLE:CEO
+URL;TYPE=WORK:https://wondertech.io
+PHOTO:data:image/png;base64,placeholder
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Edward Norton
+N:Norton;Edward;;;
+EMAIL;TYPE=HOME:ed.norton@movies.com
+TEL;TYPE=CELL:+1 555-789-0123
+NOTE:Actor friend
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Fiona Apple
+N:Apple;Fiona;;;
+EMAIL;TYPE=HOME:fiona@music.net
+TEL;TYPE=CELL:+1 555-890-1234
+ORG:Independent Artist
+TITLE:Musician
+NOTE:Met at concert
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:George Lucas
+N:Lucas;George;;;
+EMAIL;TYPE=WORK:george@lucasfilm.com
+TEL;TYPE=WORK:+1 555-901-2345
+ORG:Lucasfilm Ltd
+TITLE:Founder
+URL;TYPE=WORK:https://lucasfilm.com
+END:VCARD
+
+BEGIN:VCARD
+VERSION:3.0
+FN:Hannah Montana
+N:Montana;Hannah;;;
+EMAIL;TYPE=HOME:hannah@popstar.com
+TEL;TYPE=CELL:+1 555-012-3456
+NOTE:Best of both worlds
+END:VCARD
