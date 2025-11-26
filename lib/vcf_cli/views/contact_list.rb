@@ -112,13 +112,19 @@ module VcfCli
         display_name = truncate(name, name_width)
         cursor = selected ? ">" : " "
 
-        line = if selected
-                 pastel.on_blue.white(" #{cursor} #{pad_right(display_name, name_width)} #{photo_indicator}")
-               else
-                 " #{cursor} #{pad_right(display_name, name_width)} #{pastel.dim(photo_indicator)}"
-               end
+        # Build the content first, then apply styling
+        content = " #{cursor} #{pad_right(display_name, name_width)} #{photo_indicator}"
+        content = content[0, width - 2].ljust(width - 2)
 
-        print_at(1, row, line[0, width - 2])
+        if selected
+          # Selected row: blue background, white text - ensure we pad to full width
+          print_at(1, row, pastel.on_blue.white(content) + "\e[0m")
+        else
+          # Normal row: just dim the photo indicator
+          text_part = " #{cursor} #{pad_right(display_name, name_width)} "
+          photo_part = pastel.dim(photo_indicator)
+          print_at(1, row, text_part + photo_part)
+        end
       end
 
       def draw_scrollbar

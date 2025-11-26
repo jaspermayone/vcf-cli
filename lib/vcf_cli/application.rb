@@ -9,12 +9,16 @@ module VcfCli
     end
 
     def run
-      puts "Loading contacts from #{file_path}..."
+      print "Loading contacts from #{file_path}... "
+      $stdout.flush
 
       @contact_book = Models::ContactBook.new(file_path)
-      @contact_book.load
+      @contact_book.load do |count|
+        print "\rLoading contacts from #{file_path}... #{count}"
+        $stdout.flush
+      end
 
-      puts "Loaded #{contact_book.size} contacts."
+      puts "\rLoaded #{contact_book.size} contacts from #{file_path}#{" " * 10}"
 
       if contact_book.size == 0
         puts "No contacts found in file."

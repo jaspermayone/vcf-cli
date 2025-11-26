@@ -12,7 +12,7 @@ module VcfCli
         @modified = false
       end
 
-      def load
+      def load(&progress_callback)
         @contacts = []
         id = 0
 
@@ -22,8 +22,10 @@ module VcfCli
           @contacts << contact
           @search_index.add(contact)
           id += 1
+          progress_callback&.call(id) if id % 50 == 0
         end
 
+        progress_callback&.call(id)
         self
       end
 

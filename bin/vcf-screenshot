@@ -1,0 +1,104 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Generate a static screenshot of the VCF CLI interface
+
+require_relative "../lib/vcf_cli"
+
+file_path = ARGV[0] || "sample.vcf"
+
+unless File.exist?(file_path)
+  puts "File not found: #{file_path}"
+  exit 1
+end
+
+# Load contacts
+book = VcfCli::Models::ContactBook.new(file_path)
+book.load
+
+pastel = Pastel.new(enabled: true)
+
+# Dimensions
+LIST_W = 24
+DETAIL_W = 48
+TOTAL_W = LIST_W + DETAIL_W + 1  # +1 for middle border
+
+# Get data
+contacts = book.active_contacts.first(10)
+selected_idx = 2
+selected = contacts[selected_idx]
+
+# Build detail fields
+fields = []
+if selected
+  selected.phones.each { |p| fields << ["#{p[:type]}:", p[:value]] }
+  selected.emails.each { |e| fields << ["#{e[:type]}:", e[:value]] }
+  fields << ["Org:", selected.organization] if selected.organization
+  fields << ["Title:", selected.title] if selected.title
+end
+
+# Helper to colorize
+c = ->(s) { pastel.cyan(s) }
+w = ->(s) { pastel.white(s) }
+b = ->(s) { pastel.bold.white(s) }
+d = ->(s) { pastel.dim(s) }
+y = ->(s) { pastel.yellow(s) }
+sel = ->(s) { pastel.on_blue.white(s) }
+hdr = ->(s) { pastel.on_blue.white(s) }
+
+lines = []
+
+# Header
+title = " VCF CLI - #{File.basename(file_path)} (#{book.size} contacts)"
+help = "[?] Help "
+lines << hdr.call(title.ljust(TOTAL_W - help.length) + help)
+
+# Top border
+list_title = " Contacts (#{book.size}) "
+left_pad = (LIST_W - list_title.length) / 2
+right_pad = LIST_W - list_title.length - left_pad
+lines << c.call("┌" + "─" * left_pad + list_title + "─" * right_pad + "┬" + "─" * DETAIL_W + "┐")
+
+# Row 1: Filter | Name
+filter = "/#{d.call("filter...")}"
+name_display = b.call(selected&.display_name || "")
+lines << c.call("│") + " " + filter + " " * (LIST_W - 12) + c.call("│") + " " + name_display.ljust(DETAIL_W - 1) + c.call("│")
+
+# Row 2: Separator | Divider
+lines << c.call("├" + "─" * LIST_W + "┤") + " " + d.call("─" * (DETAIL_W - 2)) + " " + c.call("│")
+
+# Content rows (10 rows)
+10.times do |i|
+  # Left: contact list
+  if i < contacts.size
+    contact = contacts[i]
+    name = (contact.display_name || "Unknown")[0, LIST_W - 6]
+    photo = contact.has_photo ? y.call("[P]") : "   "
+    if i == selected_idx
+      left_content = sel.call(" > " + name.ljust(LIST_W - 4))
+    else
+      left_content = "   " + name.ljust(LIST_W - 7) + photo
+    end
+  else
+    left_content = " " * LIST_W
+  end
+
+  # Right: detail fields
+  if i < fields.size
+    label, value = fields[i]
+    right_content = " " + c.call(label.capitalize.ljust(8)) + " " + value.to_s[0, DETAIL_W - 12].ljust(DETAIL_W - 11)
+  else
+    right_content = " " * DETAIL_W
+  end
+
+  lines << c.call("│") + left_content + c.call("│") + right_content + c.call("│")
+end
+
+# Bottom border
+lines << c.call("└" + "─" * LIST_W + "┴" + "─" * DETAIL_W + "┘")
+
+# Status bar
+status = " j/k:move  /:search  E:edit  D:delete  S:save  q:quit  ?:help"
+lines << pastel.on_black(d.call(status.ljust(TOTAL_W + 1)))
+
+puts lines.join("\n")

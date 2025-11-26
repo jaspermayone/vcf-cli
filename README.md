@@ -7,6 +7,8 @@ Built for managing large contact exports from Apple Contacts before importing el
 ![Ruby](https://img.shields.io/badge/Ruby-3.0+-red)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
+![VCF CLI Screenshot](assets/screenshot.png)
+
 ## Features
 
 - **Split-pane interface** — contact list + detail view side by side
@@ -55,30 +57,11 @@ bundle exec bin/vcf-cli data/my-contacts.vcf
 
 ## Interface
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ VCF CLI - contacts.vcf (1,234 contacts)              [?] Help   │
-├───────────────────────────┬─────────────────────────────────────┤
-│ /john_                    │ John Smith                          │
-├───────────────────────────┤                                     │
-│ > John Smith         [P]  │ Phone: +1 555-123-4567              │
-│   John Doe                │ Email: john@example.com             │
-│   Johnny Appleseed   [P]  │ Work:  john.smith@company.com       │
-│   John Connor             │                                     │
-│                           │ Address:                            │
-│                           │   123 Main St                       │
-│                           │   San Francisco, CA 94102           │
-│                           │                                     │
-│                           │ Organization: Acme Corp             │
-│                           │ Title: Software Engineer            │
-│                           │                                     │
-│                           │ [P] Has photo                       │
-├───────────────────────────┴─────────────────────────────────────┤
-│ j/k:move  /:search  E:edit  D:delete  S:save  q:quit  ?:help    │
-└─────────────────────────────────────────────────────────────────┘
-```
+The split-pane interface shows your contact list on the left and details on the right.
 
-`[P]` indicates contacts with embedded photos.
+- `[P]` indicates contacts with embedded photos
+- The status bar shows available keybindings
+- Filter results update live as you type
 
 ## Supported vCard Versions
 
