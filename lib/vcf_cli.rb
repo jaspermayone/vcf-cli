@@ -17,6 +17,7 @@ require_relative "vcf_cli/services/file_service"
 
 # Views
 require_relative "vcf_cli/views/base_view"
+require_relative "vcf_cli/views/loading_view"
 require_relative "vcf_cli/views/contact_list"
 require_relative "vcf_cli/views/detail_panel"
 require_relative "vcf_cli/views/status_bar"
