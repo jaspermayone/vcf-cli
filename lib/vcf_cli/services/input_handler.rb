@@ -17,9 +17,9 @@ module VcfCli
         top: ["g"],         # gg sequence
         bottom: ["G"],
         search: ["/"],
-        edit: ["E"],
-        delete: ["D"],
-        save: ["S"],
+        edit: ["E", "e"],
+        delete: ["D", "d"],
+        save: ["S", "s"],
         quit: ["q"],
         help: ["?"],
         enter: [:enter],

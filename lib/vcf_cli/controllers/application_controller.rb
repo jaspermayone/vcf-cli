@@ -10,10 +10,11 @@ module VcfCli
         @contact_book = contact_book
         @screen = Services::ScreenManager.new
         @input = Services::InputHandler.new
-        @mode = :normal  # :normal, :search, :edit, :confirm_delete, :confirm_quit
+        @mode = :normal  # :normal, :search, :edit, :confirm_delete, :confirm_quit, :duplicates
         @filter = ""
         @running = true
         @pending_action = nil
+        @duplicates_view = nil
 
         setup_views
       end
@@ -60,10 +61,15 @@ module VcfCli
       end
 
       def render
-        draw_header
-        list_view.render
-        detail_view.render
-        status_bar.render
+        if @mode == :duplicates && @duplicates_view
+          @duplicates_view.render
+        else
+          draw_header
+          list_view.render
+          detail_view.render
+          @edit_modal&.render
+          status_bar.render
+        end
         $stdout.flush
       end
 
@@ -98,10 +104,14 @@ module VcfCli
           handle_normal_mode(key)
         when :search
           handle_search_mode(key)
+        when :edit
+          handle_edit_mode(key)
         when :confirm_delete
           handle_confirm_delete(key)
         when :confirm_quit
           handle_confirm_quit(key)
+        when :duplicates
+          handle_duplicates_mode(key)
         end
 
         render
@@ -129,12 +139,14 @@ module VcfCli
           update_detail_view
         when "/"
           enter_search_mode
-        when "E"
+        when "E", "e"
           edit_contact
-        when "D"
+        when "D", "d"
           enter_delete_mode
-        when "S"
+        when "S", "s"
           save_contacts
+        when "M", "m"
+          find_duplicates
         when "q"
           quit_or_confirm
         when "?"
@@ -229,61 +241,59 @@ module VcfCli
         contact = list_view.selected_contact
         return unless contact
 
-        # Simple edit mode - cycle through editable fields
-        screen.teardown
-        puts "\n--- Editing: #{contact.display_name} ---\n"
-        puts "(Press Enter to keep current value, or type new value)\n\n"
+        @edit_modal = Views::EditModal.new(screen, contact)
+        @mode = :edit
+      end
 
-        # Edit display name
-        print "Name [#{contact.display_name}]: "
-        new_name = $stdin.gets.chomp
-        contact.display_name = new_name unless new_name.empty?
+      def handle_edit_mode(key)
+        return unless @edit_modal
 
-        # Edit primary phone
-        current_phone = contact.primary_phone || ""
-        print "Phone [#{current_phone}]: "
-        new_phone = $stdin.gets.chomp
-        unless new_phone.empty?
-          if contact.phones.empty?
-            contact.phones << { type: "CELL", value: new_phone }
-          else
-            contact.phones.first[:value] = new_phone
+        if @edit_modal.editing
+          # In field editing mode
+          case key
+          when :escape
+            @edit_modal.stop_editing
+          when :enter
+            @edit_modal.stop_editing
+          when :left
+            @edit_modal.move_cursor_left
+          when :right
+            @edit_modal.move_cursor_right
+          when :backspace
+            @edit_modal.delete_char
+          when String
+            @edit_modal.insert_char(key) if key.length == 1 && key.ord >= 32
+          end
+        else
+          # In field navigation mode
+          case key
+          when :escape
+            exit_edit_mode(save: false)
+          when :enter
+            @edit_modal.start_editing
+          when "\t", :tab
+            exit_edit_mode(save: true)
+          when :up, "k"
+            @edit_modal.move_up
+          when :down, "j"
+            @edit_modal.move_down
           end
         end
 
-        # Edit primary email
-        current_email = contact.primary_email || ""
-        print "Email [#{current_email}]: "
-        new_email = $stdin.gets.chomp
-        unless new_email.empty?
-          if contact.emails.empty?
-            contact.emails << { type: "HOME", value: new_email }
-          else
-            contact.emails.first[:value] = new_email
-          end
+        @edit_modal.render if @edit_modal
+      end
+
+      def exit_edit_mode(save:)
+        if save && @edit_modal
+          @edit_modal.apply_changes
+          contact_book.update(@edit_modal.contact)
+          status_bar.modified = contact_book.modified?
+          status_bar.show_message("Contact updated")
         end
-
-        # Edit organization
-        current_org = contact.organization || ""
-        print "Organization [#{current_org}]: "
-        new_org = $stdin.gets.chomp
-        unless new_org.empty?
-          if contact.organizations.empty?
-            contact.organizations << new_org
-          else
-            contact.organizations[0] = new_org
-          end
-        end
-
-        contact.mark_modified!
-        contact_book.update(contact)
-
-        puts "\nContact updated. Press Enter to continue..."
-        $stdin.gets
-
-        screen.setup
+        @edit_modal&.stop_editing
+        @edit_modal = nil
+        @mode = :normal
         refresh_contacts
-        status_bar.modified = contact_book.modified?
       end
 
       def save_contacts
@@ -294,6 +304,92 @@ module VcfCli
         rescue StandardError => e
           status_bar.show_message("Save failed: #{e.message}")
         end
+      end
+
+      def find_duplicates
+        status_bar.show_message("Scanning for duplicates...")
+        render
+
+        finder = Services::DuplicateFinder.new(contact_book)
+        groups = finder.find_duplicates
+
+        @duplicates_view = Views::DuplicatesView.new(screen, duplicate_groups: groups)
+        @duplicate_finder = finder
+        @mode = :duplicates
+      end
+
+      def handle_duplicates_mode(key)
+        return unless @duplicates_view
+
+        case key
+        when :escape
+          exit_duplicates_mode
+          return
+        when :up, "k"
+          @duplicates_view.move_group_up
+        when :down, "j"
+          @duplicates_view.move_group_down
+        when :left, "h"
+          @duplicates_view.move_contact_left
+        when :right, "l"
+          @duplicates_view.move_contact_right
+        when :enter
+          merge_duplicate_group
+        when "s", "S"
+          skip_duplicate_group
+        end
+
+        @duplicates_view&.render
+      end
+
+      def merge_duplicate_group
+        return unless @duplicates_view && @duplicate_finder
+
+        primary = @duplicates_view.primary_contact
+        others = @duplicates_view.other_contacts
+
+        return if primary.nil? || others.empty?
+
+        others.each do |other|
+          @duplicate_finder.merge_contacts(primary, other)
+        end
+
+        merged_count = others.size
+        @duplicates_view.status_message = "Merged #{merged_count} contacts into #{primary.display_name}"
+        @duplicates_view.remove_current_group
+
+        status_bar.modified = contact_book.modified?
+
+        if @duplicates_view.duplicate_groups.empty?
+          @duplicates_view.status_message = "All duplicates processed!"
+          @duplicates_view.render
+          $stdout.flush
+          sleep 1
+          exit_duplicates_mode
+        end
+      end
+
+      def skip_duplicate_group
+        return unless @duplicates_view
+
+        @duplicates_view.status_message = "Skipped group"
+        @duplicates_view.remove_current_group
+
+        if @duplicates_view.duplicate_groups.empty?
+          @duplicates_view.status_message = "All duplicates processed!"
+          @duplicates_view.render
+          $stdout.flush
+          sleep 1
+          exit_duplicates_mode
+        end
+      end
+
+      def exit_duplicates_mode
+        @duplicates_view = nil
+        @duplicate_finder = nil
+        @mode = :normal
+        refresh_contacts
+        status_bar.show_message("Duplicate finder closed")
       end
 
       def quit_or_confirm
@@ -324,14 +420,17 @@ module VcfCli
           │    /            Search/filter contacts                     │
           │    E            Edit selected contact                      │
           │    D            Delete selected contact                    │
+          │    M            Find & merge duplicates                    │
           │    S            Save changes                               │
           │    q            Quit                                       │
           │    ?            Show this help                             │
           │                                                             │
-          │  Search Mode:                                               │
-          │    Type         Filter contacts                            │
-          │    Enter        Apply filter                               │
-          │    Escape       Clear filter and exit search               │
+          │  Duplicate Finder:                                          │
+          │    j/k          Navigate groups                            │
+          │    h/l          Select primary contact                     │
+          │    Enter        Merge selected group                       │
+          │    s            Skip group                                 │
+          │    Escape       Exit duplicate finder                      │
           │                                                             │
           └─────────────────────────────────────────────────────────────┘
 
